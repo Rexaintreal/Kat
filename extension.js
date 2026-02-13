@@ -10,20 +10,7 @@ function activate(context) {
 	// loading today's progress from storage (0 if first run)
 	let goal = context.globalState.get('goal', 0);
 	if(goal === 0 ){
-		vscode.window.showInputBox({
-			prompt: 'Enter Your daily line goal',
-			placeHolder: 'e.g. 1000'
-		}).then(function(value) {
-			if (value === undefined || value === '') {
-				return;
-			}
-			goal = parseInt(value, 10);
-			if (isNaN(goal) || goal <= 0) {
-				vscode.window.showErrorMessage('Please enter a valid number greater than 0');
-				return;
-			}
-			context.globalState.update('goal', goal);
-		})
+		askForGoal(context)
 	}
 	let lineCount = context.globalState.get('lineCount', 0);
 	let lastDate = context.globalState.get('lastDate', '');
@@ -52,20 +39,7 @@ function activate(context) {
 	});
 	// set goal command
 	const editgoal = vscode.commands.registerCommand('kat.edit', function () {
-		vscode.window.showInputBox({
-			prompt: 'Enter Your daily line goal',
-			placeHolder: 'e.g. 1000'
-		}).then(function(value) {
-			if (value === undefined || value === '') {
-				return;
-			}
-			goal = parseInt(value, 10);
-			if (isNaN(goal) || goal <= 0) {
-				vscode.window.showErrorMessage('Please enter a valid number greater than 0');
-				return;
-			}
-			context.globalState.update('goal', goal);
-		})
+		askForGoal(context)
 	})
 	// listen for typing and increment counter when pressed enter
 	vscode.workspace.onDidChangeTextDocument(function(event) {
@@ -80,6 +54,26 @@ function activate(context) {
 	context.subscriptions.push(editgoal);
 	context.subscriptions.push(disposable);
 	context.subscriptions.push(statusBarLineCount);
+}
+
+/**
+ * @param {vscode.ExtensionContext} context
+ */
+function askForGoal(context) {
+	vscode.window.showInputBox({
+		prompt: 'Enter Your daily line goal',
+		placeHolder: 'e.g. 1000'
+	}).then(function(value) {
+		if (value === undefined || value === '') {
+			return;
+		}
+		let newGoal = parseInt(value, 10);
+		if (isNaN(newGoal) || newGoal <= 0) {
+			vscode.window.showErrorMessage('Please enter a valid number greater than 0');
+			return;
+		}
+		context.globalState.update('goal', newGoal);
+	})
 }
 
 function deactivate() {}

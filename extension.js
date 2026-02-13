@@ -23,7 +23,14 @@ function activate(context) {
 		// Display a message box to the user
 		vscode.window.showInformationMessage('Hello World from Kat!');
 	});
-
+	let lineCount = 0;
+	vscode.workspace.onDidChangeTextDocument(function(event) {
+		let text = event.contentChanges[0].text;
+		if (text.includes('\n')) {
+			lineCount= lineCount+1;
+		}
+		console.log(lineCount)
+	});
 	context.subscriptions.push(disposable);
 }
 

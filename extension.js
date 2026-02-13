@@ -8,6 +8,23 @@ function activate(context) {
 
 	console.log('Kat Started! Meow :3');
 	// loading today's progress from storage (0 if first run)
+	let goal = context.globalState.get('goal', 0);
+	if(goal === 0 ){
+		vscode.window.showInputBox({
+			prompt: 'Enter Your daily line goal',
+			placeHolder: 'e.g. 1000'
+		}).then(function(value) {
+			if (value === undefined || value === '') {
+				return;
+			}
+			goal = parseInt(value, 10);
+			if (isNaN(goal) || goal <= 0) {
+				vscode.window.showErrorMessage('Please enter a valid number greater than 0');
+				return;
+			}
+			context.globalState.update('goal', goal);
+		})
+	}
 	let lineCount = context.globalState.get('lineCount', 0);
 	let lastDate = context.globalState.get('lastDate', '');
 	let today = new Date().toDateString();
@@ -33,6 +50,23 @@ function activate(context) {
 		</body>
 		</html>`
 	});
+	// set goal command
+	const editgoal = vscode.commands.registerCommand('kat.edit', function () {
+		vscode.window.showInputBox({
+			prompt: 'Enter Your daily line goal',
+			placeHolder: 'e.g. 1000'
+		}).then(function(value) {
+			if (value === undefined || value === '') {
+				return;
+			}
+			goal = parseInt(value, 10);
+			if (isNaN(goal) || goal <= 0) {
+				vscode.window.showErrorMessage('Please enter a valid number greater than 0');
+				return;
+			}
+			context.globalState.update('goal', goal);
+		})
+	})
 	// listen for typing and increment counter when pressed enter
 	vscode.workspace.onDidChangeTextDocument(function(event) {
 		let text = event.contentChanges[0].text;
@@ -43,6 +77,7 @@ function activate(context) {
 			statusBarLineCount.text = `$(pulse) Lines today: ${lineCount}`;
 		}
 	});
+	context.subscriptions.push(editgoal);
 	context.subscriptions.push(disposable);
 	context.subscriptions.push(statusBarLineCount);
 }

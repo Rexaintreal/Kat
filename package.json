@@ -15,6 +15,10 @@
     "commands": [{
       "command": "kat.open",
       "title": "Open Kat"
+    },
+    {
+      "command": "kat.edit",
+      "title": "Set Kat Goal"
     }]
   },
   "scripts": {

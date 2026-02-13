@@ -16,6 +16,8 @@ function activate(context) {
 		lineCount=0;
 		context.globalState.update('lastDate', today);
 	}
+	const statusBarLineCount = vscode.window.createStatusBarItem();
+	statusBarLineCount.text = `$(pulse) Lines today: ${lineCount}`;
 	const disposable = vscode.commands.registerCommand('kat.start', function () {
 		vscode.window.showInformationMessage('Kat Started!');
 	});
@@ -24,10 +26,13 @@ function activate(context) {
 		if (text.includes('\n')) {
 			lineCount= lineCount+1;
 			context.globalState.update('lineCount', lineCount);
+			statusBarLineCount.text = `$(pulse) Lines today: ${lineCount}`;
 		}
 		console.log(lineCount)
 	});
+	statusBarLineCount.show();
 	context.subscriptions.push(disposable);
+	context.subscriptions.push(statusBarLineCount);
 }
 
 function deactivate() {}

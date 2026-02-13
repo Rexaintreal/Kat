@@ -1,5 +1,8 @@
 const vscode = require('vscode');
 
+/** @type {vscode.WebviewPanel | null} */
+let panel = null;
+
 /**
  * @param {vscode.ExtensionContext} context
  */
@@ -28,14 +31,41 @@ function activate(context) {
 	const disposable = vscode.commands.registerCommand('kat.open', function () {
 		// local asset to webview sage uri
 		const alivePath = vscode.Uri.joinPath(context.extensionUri, 'assets', 'alive.png');
-		const panel = vscode.window.createWebviewPanel('katPanel', 'Kat', vscode.ViewColumn.Two, { localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'assets')] });
+		panel = vscode.window.createWebviewPanel('katPanel', 'Kat', vscode.ViewColumn.Two, { localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'assets')], enableScripts: true });	
+		panel.onDidDispose(function() {
+			panel = null;
+		})
 		const catUri = panel.webview.asWebviewUri(alivePath);
+		let currentGoal = context.globalState.get('goal', 0);
 		panel.webview.html = `<!DOCTYPE html>
 		<html>
-		<body style="background: #1e1e1e; display:flex; justify-content:center; align-items:center; height: 100vh;">
-			<img src="${catUri}" width="200">
+		<body style="background: #1e1e1e; color: white; display:flex; flex-direction:column; justify-content:center; align-items:center; height: 100vh; font-family: sans-serif;">
+			<img id="catImage" src="${catUri}" width="200">
+			<p id="label" style="margin-top: 20px;">0 / 0 lines</p>
+			<div style="width:300px; background:#444; border-radius:10px; height:20px; margin-top:10px;">
+				<div id="progressBar" style="width:0%; background:#7cc379; height:20px; border-radius:10px; transition: width 0.3s;"></div>
+			</div>
+			<script>
+				// set init state 
+				let count = ${lineCount};
+				let goal = ${currentGoal};
+				function updateDisplay(c, g) {
+					let percent = g > 0 ? Math.min((c / g) * 100, 100): 0;
+					document.getElementById('progressBar').style.width = percent + '%';
+					document.getElementById('label').textContent = c + ' / ' + g + ' lines';
+				}
+
+				// run on load immediately 
+				updateDisplay(count, goal);
+
+				// listen for updates
+				window.addEventListener('message', function(event) {
+					updateDisplay(event.data.lineCount, event.data.goal);
+				});
+			</script>
 		</body>
 		</html>`
+		panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal });
 	});
 	// set goal command
 	const editgoal = vscode.commands.registerCommand('kat.edit', function () {
@@ -49,6 +79,10 @@ function activate(context) {
 			lineCount= lineCount+1;
 			context.globalState.update('lineCount', lineCount);
 			statusBarLineCount.text = `$(pulse) Lines today: ${lineCount}`;
+		}
+		if (panel) {
+			let currentGoal = context.globalState.get('goal', 0);
+			panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal });
 		}
 	});
 	context.subscriptions.push(editgoal);

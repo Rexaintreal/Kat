@@ -1,40 +1,35 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
-
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "kat" is now active!');
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('kat.helloWorld', function () {
-		// The code you place here will be executed every time your command is executed
-
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from Kat!');
+	console.log('Kat Started! Meow :3');
+	let lineCount = context.globalState.get('lineCount', 0);
+	let lastDate = context.globalState.get('lastDate', '');
+	let today = new Date().toDateString();
+	console.log(lineCount)
+	console.log(lastDate)
+	console.log(today)
+	if (lastDate !== today) {
+		lineCount=0;
+		context.globalState.update('lastDate', today);
+	}
+	const disposable = vscode.commands.registerCommand('kat.start', function () {
+		vscode.window.showInformationMessage('Kat Started!');
 	});
-	let lineCount = 0;
 	vscode.workspace.onDidChangeTextDocument(function(event) {
 		let text = event.contentChanges[0].text;
 		if (text.includes('\n')) {
 			lineCount= lineCount+1;
+			context.globalState.update('lineCount', lineCount);
 		}
 		console.log(lineCount)
 	});
 	context.subscriptions.push(disposable);
 }
 
-// This method is called when your extension is deactivated
 function deactivate() {}
 
 module.exports = {

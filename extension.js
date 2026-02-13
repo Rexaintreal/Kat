@@ -18,8 +18,16 @@ function activate(context) {
 	}
 	const statusBarLineCount = vscode.window.createStatusBarItem();
 	statusBarLineCount.text = `$(pulse) Lines today: ${lineCount}`;
-	const disposable = vscode.commands.registerCommand('kat.start', function () {
-		vscode.window.showInformationMessage('Kat Started!');
+	const disposable = vscode.commands.registerCommand('kat.open', function () {
+		const alivePath = vscode.Uri.joinPath(context.extensionUri, 'assets', 'alive.png');
+		const panel = vscode.window.createWebviewPanel('katPanel', 'Kat', vscode.ViewColumn.Two, { localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'assets')] });
+		const catUri = panel.webview.asWebviewUri(alivePath);
+		panel.webview.html = `<!DOCTYPE html>
+		<html>
+		<body style="background: #1e1e1e; display:flex; justify-content:center; align-items:center; height: 100vh;">
+			<img src="${catUri}" width="200">
+		</body>
+		</html>`
 	});
 	vscode.workspace.onDidChangeTextDocument(function(event) {
 		let text = event.contentChanges[0].text;

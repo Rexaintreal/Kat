@@ -13,8 +13,8 @@
   "main": "./extension.js",
   "contributes": {
     "commands": [{
-      "command": "kat.helloWorld",
-      "title": "Hello World"
+      "command": "kat.open",
+      "title": "Open Kat"
     }]
   },
   "scripts": {

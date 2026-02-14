@@ -18,9 +18,20 @@ function activate(context) {
 	let lineCount = context.globalState.get('lineCount', 0);
 	let lastDate = context.globalState.get('lastDate', '');
 	let today = new Date().toDateString();
+	let hearts = context.globalState.get('hearts', 3);
+	let isDead = context.globalState.get('isDead', false);
 	// new day - reset line counter 
 	if (lastDate !== today) {
+		if (lastDate !== '' && lineCount < goal && goal !== 0 ) {
+			hearts--;
+			if (hearts === 0) {
+				isDead = true;
+				context.globalState.update('isDead', isDead);
+			}
+			context.globalState.update('hearts', hearts);
+		}
 		lineCount=0;
+		context.globalState.update('lineCount', lineCount);
 		context.globalState.update('lastDate', today);
 	}
 	// live count status bar 
@@ -31,11 +42,17 @@ function activate(context) {
 	const disposable = vscode.commands.registerCommand('kat.open', function () {
 		// local asset to webview sage uri
 		const alivePath = vscode.Uri.joinPath(context.extensionUri, 'assets', 'alive.png');
+		const deadPath = vscode.Uri.joinPath(context.extensionUri, 'assets', 'dead.png');
+		const heart = vscode.Uri.joinPath(context.extensionUri, 'assets', 'heart.png');
+		const heartEmpty = vscode.Uri.joinPath(context.extensionUri, 'assets', 'heart-empty.png');
 		panel = vscode.window.createWebviewPanel('katPanel', 'Kat', vscode.ViewColumn.Two, { localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'assets')], enableScripts: true });	
 		panel.onDidDispose(function() {
 			panel = null;
 		})
 		const catUri = panel.webview.asWebviewUri(alivePath);
+		const deadCatUri = panel.webview.asWebviewUri(deadPath);
+		const heartUri = panel.webview.asWebviewUri(heart);
+		const heartEmptyUri = panel.webview.asWebviewUri(heartEmpty);
 		let currentGoal = context.globalState.get('goal', 0);
 		panel.webview.html = `<!DOCTYPE html>
 		<html>
@@ -44,28 +61,46 @@ function activate(context) {
 			<p id="label" style="margin-top: 20px;">0 / 0 lines</p>
 			<div style="width:300px; background:#444; border-radius:10px; height:20px; margin-top:10px;">
 				<div id="progressBar" style="width:0%; background:#7cc379; height:20px; border-radius:10px; transition: width 0.3s;"></div>
+				<div style="display:flex; gap:10px;">
+					<img id="heart1" src="${heartUri}" width="30">
+					<img id="heart2" src="${heartUri}" width="30">
+					<img id="heart3" src="${heartUri}" width="30">
+				</div>
 			</div>
 			<script>
 				// set init state 
 				let count = ${lineCount};
 				let goal = ${currentGoal};
-				function updateDisplay(c, g) {
+				function updateDisplay(c, g, h, d) {
 					let percent = g > 0 ? Math.min((c / g) * 100, 100): 0;
 					document.getElementById('progressBar').style.width = percent + '%';
 					document.getElementById('label').textContent = c + ' / ' + g + ' lines';
+					if (d==true) {
+						document.getElementById('catImage').src = '${deadCatUri}';
+					} else {
+						document.getElementById('catImage').src = '${catUri}';
+					}
+					for (let i = 1; i<=3; i++) {
+						const heartElement = document.getElementById('heart' + i);
+						if (i <= h) {
+						heartElement.src = '${heartUri}';
+						} else {
+							heartEl.src = '${heartEmptyUri}';
+						}
+					}
 				}
 
 				// run on load immediately 
-				updateDisplay(count, goal);
+				updateDisplay(count, goal, ${hearts}, ${isDead});
 
 				// listen for updates
 				window.addEventListener('message', function(event) {
-					updateDisplay(event.data.lineCount, event.data.goal);
+					updateDisplay(event.data.lineCount, event.data.goal, event.data.hearts, event.data.isDead);
 				});
 			</script>
 		</body>
 		</html>`
-		panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal });
+		panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead });
 	});
 	// set goal command
 	const editgoal = vscode.commands.registerCommand('kat.edit', function () {
@@ -82,7 +117,7 @@ function activate(context) {
 		}
 		if (panel) {
 			let currentGoal = context.globalState.get('goal', 0);
-			panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal });
+			panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead});
 		}
 	});
 	context.subscriptions.push(editgoal);

@@ -37,9 +37,13 @@ function activate(context) {
 	// live count status bar 
 	const statusBarLineCount = vscode.window.createStatusBarItem();
 	statusBarLineCount.text = `$(pulse) Lines today: ${lineCount}`;
+	statusBarLineCount.command = 'kat.open';
 	statusBarLineCount.show();
 	// Kat panel with webview
 	const disposable = vscode.commands.registerCommand('kat.open', function () {
+		if(panel!=null) {
+			return panel.reveal();
+		}
 		// local asset to webview sage uri
 		const alivePath = vscode.Uri.joinPath(context.extensionUri, 'assets', 'alive.png');
 		const deadPath = vscode.Uri.joinPath(context.extensionUri, 'assets', 'dead.png');

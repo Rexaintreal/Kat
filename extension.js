@@ -15,6 +15,7 @@ function activate(context) {
 	if(goal === 0 ){
 		askForGoal(context)
 	}
+	let streaks = context.globalState.get('streaks', 0);
 	let lineCount = context.globalState.get('lineCount', 0);
 	let lastDate = context.globalState.get('lastDate', '');
 	let today = new Date().toDateString();
@@ -30,7 +31,15 @@ function activate(context) {
 			}
 			context.globalState.update('hearts', hearts);
 		}
+		if (lastDate !== '') {
+    		if (lineCount >= goal) {
+				streaks++;
+			} else {
+				streaks=0;
+			}
+		}
 		lineCount=0;
+		context.globalState.update('streaks', streaks);
 		context.globalState.update('lineCount', lineCount);
 		context.globalState.update('lastDate', today);
 	}
@@ -61,6 +70,9 @@ function activate(context) {
 		panel.webview.html = `<!DOCTYPE html>
 		<html>
 		<body style="background: #f2e8e4; color: #333; display:flex; flex-direction:column; justify-content:center; align-items:center; height: 100vh; font-family: sans-serif;">
+			<div id="streakLabel" style="position:absolute; top: 20px; left: 20px; font-weight: bold; font-size: 1.2rem;">
+				Streaks: 0 Days
+			</div>
 			<img id="catImage" src="${catUri}" width="500">
 			<p id="label" style="margin-top: 20px;">0 / 0 lines</p>
 			<div style="width:300px; background:#444; border-radius:10px; height:20px; margin-top:10px;">
@@ -75,7 +87,7 @@ function activate(context) {
 				// set init state 
 				let count = ${lineCount};
 				let goal = ${currentGoal};
-				function updateDisplay(c, g, h, d) {
+				function updateDisplay(c, g, h, d, s) {
 					let percent = g > 0 ? Math.min((c / g) * 100, 100): 0;
 					document.getElementById('progressBar').style.width = percent + '%';
 					document.getElementById('label').textContent = c + ' / ' + g + ' lines';
@@ -92,19 +104,20 @@ function activate(context) {
 							heartElement.src = '${heartEmptyUri}';
 						}
 					}
+					document.getElementById('streakLabel').textContent = "Streak: " + s + " days";
 				}
 
 				// run on load immediately 
-				updateDisplay(count, goal, ${hearts}, ${isDead});
+				updateDisplay(count, goal, ${hearts}, ${isDead}, ${streaks});
 
 				// listen for updates
 				window.addEventListener('message', function(event) {
-					updateDisplay(event.data.lineCount, event.data.goal, event.data.hearts, event.data.isDead);
+					updateDisplay(event.data.lineCount, event.data.goal, event.data.hearts, event.data.isDead, event.data.streaks);
 				});
 			</script>
 		</body>
 		</html>`
-		panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead });
+		panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead, streaks: streaks});
 	});
 	// set goal command
 	const editgoal = vscode.commands.registerCommand('kat.edit', function () {
@@ -121,7 +134,7 @@ function activate(context) {
 		}
 		if (panel) {
 			let currentGoal = context.globalState.get('goal', 0);
-			panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead});
+			panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead, streaks: streaks});
 		}
 	});
 	context.subscriptions.push(editgoal);

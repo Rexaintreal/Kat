@@ -56,17 +56,17 @@ function activate(context) {
 		let currentGoal = context.globalState.get('goal', 0);
 		panel.webview.html = `<!DOCTYPE html>
 		<html>
-		<body style="background: #1e1e1e; color: white; display:flex; flex-direction:column; justify-content:center; align-items:center; height: 100vh; font-family: sans-serif;">
-			<img id="catImage" src="${catUri}" width="200">
+		<body style="background: #f2e8e4; color: #333; display:flex; flex-direction:column; justify-content:center; align-items:center; height: 100vh; font-family: sans-serif;">
+			<img id="catImage" src="${catUri}" width="500">
 			<p id="label" style="margin-top: 20px;">0 / 0 lines</p>
 			<div style="width:300px; background:#444; border-radius:10px; height:20px; margin-top:10px;">
 				<div id="progressBar" style="width:0%; background:#7cc379; height:20px; border-radius:10px; transition: width 0.3s;"></div>
-				<div style="display:flex; gap:10px;">
-					<img id="heart1" src="${heartUri}" width="30">
-					<img id="heart2" src="${heartUri}" width="30">
-					<img id="heart3" src="${heartUri}" width="30">
-				</div>
 			</div>
+				<div style="display:flex; gap:10px; justify-content: center; margin-top: 20px;">
+					<img id="heart1" src="${heartUri}" width="100">
+					<img id="heart2" src="${heartUri}" width="100">
+					<img id="heart3" src="${heartUri}" width="100">
+				</div>
 			<script>
 				// set init state 
 				let count = ${lineCount};
@@ -85,7 +85,7 @@ function activate(context) {
 						if (i <= h) {
 						heartElement.src = '${heartUri}';
 						} else {
-							heartEl.src = '${heartEmptyUri}';
+							heartElement.src = '${heartEmptyUri}';
 						}
 					}
 				}

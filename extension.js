@@ -23,25 +23,39 @@ function activate(context) {
 	let isDead = context.globalState.get('isDead', false);
 	// new day - reset line counter 
 	if (lastDate !== today) {
-		if (lastDate !== '' && lineCount < goal && goal !== 0 ) {
-			hearts--;
-			if (hearts === 0) {
-				isDead = true;
-				context.globalState.update('isDead', isDead);
+		if (lastDate !== ''){
+			const lastDateObj = new Date(lastDate);
+			const todayObj = new Date(today);
+			const daysDiff = Math.floor((todayObj.getTime() - lastDateObj.getTime()) / (1000*60*60*24));
+			for (let i =0; i < daysDiff; i++) {
+				if (i===0) {
+					if (lineCount >= goal && goal !== 0) {
+						streaks++;
+					} else {
+						streaks = 0;
+					}
+					if (lineCount < goal && goal !== 0) {
+						hearts--;
+					}
+				} else {
+					streaks=0;
+					hearts--;
+				}
+				if (hearts <= 0) {
+					hearts = 0;
+					isDead= true;
+					streaks = 0;
+					break;
+				}
+				lineCount =0;
 			}
-			context.globalState.update('hearts', hearts);
 		}
-		if (lastDate !== '') {
-    		if (lineCount >= goal) {
-				streaks++;
-			} else {
-				streaks=0;
-			}
-		}
-		lineCount=0;
-		context.globalState.update('streaks', streaks);
+		lineCount = 0;
 		context.globalState.update('lineCount', lineCount);
 		context.globalState.update('lastDate', today);
+		context.globalState.update('hearts', hearts);
+		context.globalState.update('streaks', streaks);
+		context.globalState.update('isDead', isDead);
 	}
 	// live count status bar 
 	const statusBarLineCount = vscode.window.createStatusBarItem();

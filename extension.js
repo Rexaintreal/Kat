@@ -33,6 +33,9 @@ function activate(context) {
 				if (i===0) {
 					if (lineCount >= goal && goal !== 0) {
 						streaks++;
+						if (streaks % 5 === 0 && hearts < 3) {
+							hearts++;
+						}
 					} else {
 						streaks = 0;
 					}

@@ -8,7 +8,9 @@ let panel = null;
  */
 
 function activate(context) {
-
+	// test case for reviving logic
+	// context.globalState.update('isDead', true);
+	// context.globalState.update('hearts', 0);
 	console.log('Kat Started! Meow :3');
 	// loading today's progress from storage (0 if first run)
 	let goal = context.globalState.get('goal', 0);
@@ -76,6 +78,18 @@ function activate(context) {
 		panel.onDidDispose(function() {
 			panel = null;
 		})
+		panel.webview.onDidReceiveMessage(function(message) {
+			if (message.type === 'revive') {
+				hearts = 1;
+				isDead = false;
+				context.globalState.update('hearts', hearts);
+				context.globalState.update('isDead', isDead);
+				let currentGoal = context.globalState.get('goal', 0);
+				if (panel) {
+					panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead, streaks: streaks });
+				}
+			}
+		})
 		const catUri = panel.webview.asWebviewUri(alivePath);
 		const deadCatUri = panel.webview.asWebviewUri(deadPath);
 		const heartUri = panel.webview.asWebviewUri(heart);
@@ -92,12 +106,17 @@ function activate(context) {
 			<div style="width:300px; background:#444; border-radius:10px; height:20px; margin-top:10px;">
 				<div id="progressBar" style="width:0%; background:#7cc379; height:20px; border-radius:10px; transition: width 0.3s;"></div>
 			</div>
-				<div style="display:flex; gap:10px; justify-content: center; margin-top: 20px;">
-					<img id="heart1" src="${heartUri}" width="100">
-					<img id="heart2" src="${heartUri}" width="100">
-					<img id="heart3" src="${heartUri}" width="100">
-				</div>
+			<div style="display:flex; gap:10px; justify-content: center; margin-top: 20px;">
+				<img id="heart1" src="${heartUri}" width="100">
+				<img id="heart2" src="${heartUri}" width="100">
+				<img id="heart3" src="${heartUri}" width="100">
+			</div>
+			<button id="reviveBtn" style="display:none; margin-top: 20px; padding: 10px 24px; font-size: 1rem; background: #7cc379; color: white; border: none; border-radius: 10px; cursor: pointer;">Revive Kat :3</button>
 			<script>
+				const vscode = acquireVsCodeApi();
+				document.getElementById('reviveBtn').addEventListener('click', function() {
+					vscode.postMessage({ type: 'revive' });
+				});
 				// set init state 
 				let count = ${lineCount};
 				let goal = ${currentGoal};
@@ -119,6 +138,7 @@ function activate(context) {
 						}
 					}
 					document.getElementById('streakLabel').textContent = "Streak: " + s + " days";
+					document.getElementById('reviveBtn').style.display = d ? 'block' : 'none';
 				}
 
 				// run on load immediately 

@@ -3,6 +3,23 @@ const vscode = require('vscode');
 /** @type {vscode.WebviewPanel | null} */
 let panel = null;
 
+
+/**
+ * @param {number} lineCount
+ * @param {number} goal
+ * @returns {String}
+ */
+
+function getEncouragementMessage(lineCount, goal) {
+	if (goal=== 0) return '';
+	const percent = (lineCount / goal) * 100;
+	if (percent >= 100) return "Daily goal Completed!! YAYAY";
+	if (percent >= 75) return "Almost done! A few more lines!";
+	if (percent >= 50) return "Half way there! Keep Going!!!";
+	if (percent >= 25) return "Just Getting Started!";
+	return "Start coding to complete your daily goal!!";
+}
+
 /**
  * @param {vscode.ExtensionContext} context
  */
@@ -67,6 +84,21 @@ function activate(context) {
 	statusBarLineCount.text = `$(pulse) Lines today: ${lineCount}`;
 	statusBarLineCount.command = 'kat.open';
 	statusBarLineCount.show();
+	const reminderInterval = setInterval(function() {
+		if (panel) return;
+		let currentGoal = context.globalState.get('goal', 0);
+		if (currentGoal === 0 || isDead) return;
+		const msg = getEncouragementMessage(lineCount, currentGoal);
+		vscode.window.showInformationMessage(
+			`${msg} (${lineCount}/${currentGoal} lines today)`,
+			'Open Kat'
+		).then(function(selection) {
+			if (selection === 'Open Kat') {
+				vscode.commands.executeCommand('kat.open');
+			}
+		});
+	}, 20 * 60 * 1000);
+	context.subscriptions.push({ dispose: () => clearInterval(reminderInterval) });
 	// Kat panel with webview
 	const disposable = vscode.commands.registerCommand('kat.open', function () {
 		if(panel!=null) {
@@ -105,6 +137,7 @@ function activate(context) {
 				Streaks: 0 Days
 			</div>
 			<img id="catImage" src="${catUri}" width="500">
+			<p id="encouragement" style="font-size: 1.1rem; color: #555; margin-top: 10px;"></p>
 			<p id="label" style="margin-top: 20px;">0 / 0 lines</p>
 			<div style="width:300px; background:#444; border-radius:10px; height:20px; margin-top:10px;">
 				<div id="progressBar" style="width:0%; background:#7cc379; height:20px; border-radius:10px; transition: width 0.3s;"></div>
@@ -131,6 +164,18 @@ function activate(context) {
 						document.getElementById('catImage').src = '${deadCatUri}';
 					} else {
 						document.getElementById('catImage').src = '${catUri}';
+					}
+					if (percent >= 100) {
+						document.getElementById('encouragement').textContent = "Daily Goal Complete!!";
+					}
+					else if (percent >= 75) {
+						document.getElementById('encouragement').textContent = "Almost done! a few more lines";
+					}
+					else if (percent >= 50) {
+						document.getElementById('encouragement').textContent = "Half way there! Keep Going";
+					}
+					else if (percent >= 25) {
+						document.getElementById('encouragement').textContent = "Just Getting Started!";
 					}
 					for (let i = 1; i<=3; i++) {
 						const heartElement = document.getElementById('heart' + i);
@@ -162,12 +207,29 @@ function activate(context) {
 	})
 	// listen for typing and increment counter when pressed enter
 	vscode.workspace.onDidChangeTextDocument(function(event) {
+		if (event.contentChanges.length===0) return;
 		let text = event.contentChanges[0].text;
 		if (text.includes('\n')) {
 			//counting only newlines and updating status bar and globalState
 			lineCount= lineCount+1;
 			context.globalState.update('lineCount', lineCount);
 			statusBarLineCount.text = `$(pulse) Lines today: ${lineCount}`;
+
+			if (!panel) {
+				let currentGoal = context.globalState.get('goal', 0);
+				if (currentGoal > 0) {
+					const percent = (lineCount / currentGoal) * 100;
+					const milestone = [25, 50, 75 ,100];
+					for (const m of milestone) {
+						//crossing a milestone
+						const prev = ((lineCount - 1) / currentGoal) * 100;
+						if (prev < m && percent >= m) {
+							const msg = getEncouragementMessage(lineCount, currentGoal);
+							vscode.window.showInformationMessage(`${msg}`);
+						}
+					}
+				}
+			}
 		}
 		if (panel) {
 			let currentGoal = context.globalState.get('goal', 0);

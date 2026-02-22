@@ -14,7 +14,7 @@
   "categories": [
     "Other"
   ],
-  "icon": "logo.ico",
+  "icon": "assets/logo.png",
   "activationEvents": ["onStartupFinished"],
   "main": "./extension.js",
   "contributes": {

@@ -1,4 +1,14 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Kat Logo" width="120"/>
+</p>
+
 # Kat
+
+<p align="center">
+  <img src="https://hackatime-badge.hackclub.com/U09B8FXUS78/kat" alt="Hackatime Badge"/>
+  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black" alt="JavaScript"/>
+  <img src="https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white" alt="GitHub"/>
+</p>
 
 A VS Code companion that tracks the lines of code you write each day. Your cat (Kat) survives or loses hearts based on your daily progress. If you miss too many days...... the cat **DIES** !! PLEASE MAINTAIN YOUR STREAKS
 

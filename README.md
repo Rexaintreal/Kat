@@ -1,65 +1,56 @@
-# kat README
-
-This is the README for your extension "kat". After writing up a brief description, we recommend including the following sections.
+# kat
+A VS Code companion that tracks the lines of code you write each day, Your cat (Kat) survives or loses hearts based on your daily progress. If you miss too many days ...... the cat **DIES** !! PLEASE MAINTAIN YOUR STREAKS 
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Daily Line Goal** - Set a target goal of lines to write each day (can be changed later)
+- **Hearts System** - Start with 3 hearts you will lose one for every day you miss your goal
+- **Streaks** - Build a streak by hitting your goal daily!! earn a heart back every 5 days (max 3)
+- **Progress Bar** - Visual progress bar to show your daily goal inside the Kat webview panel
+- **Status Bar** - Live progress bar which is always visible at the bottom of VS Code (statusbar)
+- **Heatmap** - A 30 days history grid (GitHub Styled) showing which days you hit your goal and by how much
+- **Milestone Notifications** - Get notified at 25%, 50%, 75%, and 100% of your goal
+- **Revive** - Revive your cat once after it dies and start fresh
 
-For example if there is an image subfolder under your extension project workspace:
+## Commands
 
-\!\[feature X\]\(images/feature-x.png\)
+| Command | Description |
+|---|---|
+| `Open Kat` | Opens the Kat panel |
+| `Set Kat Goal` | Set or update your daily line goal |
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
 
-## Requirements
+## Setup
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+Install from the VS Code marketplace and Kat will activate automatically when VS Code starts. On first launch it will ask you to set a daily line goal.
 
-## Extension Settings
+To set or change your goal at any time, open the command palette (Ctrl+Shit+P) and run `Set Kat Goal`.
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## How It Works
 
-For example:
+Kat counts every new line you write across any file in your workspace. At the end of each day your progress is saved. If you met your goal, your streak goes up. If you missed it, you lose a heart. Miss enough days and the cat dies. Hit your goal 5 days in a row to earn a heart back.
 
-This extension contributes the following settings:
+## Project Structure
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+```
+kat/
+├── assets/
+│   ├── alive.png
+│   ├── dead.png
+│   ├── heart.png
+│   └── heart-empty.png
+├── extension.js
+├── package.json
+├── logo.ico
+└── README.md
+```
 
-## Known Issues
+## Author
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+Saurabh Tiwari
 
-## Release Notes
+- GitHub: [@Rexaintreal](https://github.com/Rexaintreal)
 
-Users appreciate release notes as you update your extension.
+## License
 
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+MIT License - [LICENSE](LICENSE)

@@ -1,8 +1,7 @@
 <p align="center">
   <img src="assets/logo.png" alt="Kat Logo" width="120"/>
+  <h1 align = "center">Kat</h1>
 </p>
-
-# Kat
 
 <p align="center">
   <img src="https://hackatime-badge.hackclub.com/U09B8FXUS78/kat" alt="Hackatime Badge"/>
@@ -62,6 +61,7 @@ kat/
 Saurabh Tiwari
 
 - GitHub: [@Rexaintreal](https://github.com/Rexaintreal)
+- Socials: [Links](https://saurabhcodesawfully.pythonanywhere.com/)
 
 ## License
 

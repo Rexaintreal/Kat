@@ -2,7 +2,7 @@
   "name": "kat",
   "displayName": "Kat",
   "description": "A VS Code cat companion extension that tracks the number of lines of code you write each day The cat survives or loses hearts based on whether you meet your daily line goals. It features three hearts a progress bar and a draggable cat displayed inside a webview",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "publisher": "saurabhtiwari",
   "engines": {
     "vscode": "^1.109.0"

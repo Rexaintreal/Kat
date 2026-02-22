@@ -21,6 +21,19 @@ function getEncouragementMessage(lineCount, goal) {
 }
 
 /**
+ * @param {number} lineCount
+ * @param {number} goal
+ * @returns {String}
+ */
+function getStatusBarText(lineCount, goal) {
+	if (goal === 0) return `$(pulse) Lines today: ${lineCount}`;
+	const percent = Math.min(lineCount / goal, 1);
+	const filled = Math.round(percent *8);
+	const bar = '■'.repeat(filled) + '□'.repeat(8- filled); // Black Square and empty square unicodefor progress bar ■ and □
+    return `$(pulse) ${bar} ${lineCount}/${goal}`;
+}
+
+/**
  * @param {vscode.ExtensionContext} context
  */
 
@@ -88,7 +101,7 @@ function activate(context) {
 	}
 	// live count status bar 
 	const statusBarLineCount = vscode.window.createStatusBarItem();
-	statusBarLineCount.text = `$(pulse) Lines today: ${lineCount}`;
+	statusBarLineCount.text = getStatusBarText(lineCount, goal);
 	statusBarLineCount.command = 'kat.open';
 	statusBarLineCount.tooltip = goal > 0 ? `Goal: ${goal} lines | ${Math.max(goal - lineCount, 0)} left` : 'No goal set';
 	statusBarLineCount.show();
@@ -290,7 +303,7 @@ function activate(context) {
 			//counting only newlines and updating status bar and globalState
 			lineCount= lineCount+1;
 			context.globalState.update('lineCount', lineCount);
-			statusBarLineCount.text = `$(pulse) Lines today: ${lineCount}`;
+			statusBarLineCount.text = getStatusBarText(lineCount, goal);
 			statusBarLineCount.tooltip = goal > 0 ? `Goal: ${goal} lines | ${Math.max(goal- lineCount, 0)} left` : 'No goal set';
 
 			if (!panel) {

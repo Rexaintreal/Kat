@@ -90,6 +90,7 @@ function activate(context) {
 	const statusBarLineCount = vscode.window.createStatusBarItem();
 	statusBarLineCount.text = `$(pulse) Lines today: ${lineCount}`;
 	statusBarLineCount.command = 'kat.open';
+	statusBarLineCount.tooltip = goal > 0 ? `Goal: ${goal} lines | ${Math.max(goal - lineCount, 0)} left` : 'No goal set';
 	statusBarLineCount.show();
 	const reminderInterval = setInterval(function() {
 		if (panel) return;
@@ -290,6 +291,7 @@ function activate(context) {
 			lineCount= lineCount+1;
 			context.globalState.update('lineCount', lineCount);
 			statusBarLineCount.text = `$(pulse) Lines today: ${lineCount}`;
+			statusBarLineCount.tooltip = goal > 0 ? `Goal: ${goal} lines | ${Math.max(goal- lineCount, 0)} left` : 'No goal set';
 
 			if (!panel) {
 				let currentGoal = context.globalState.get('goal', 0);

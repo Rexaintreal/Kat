@@ -44,8 +44,8 @@ function activate(context) {
 	console.log('Kat Started! Meow :3');
 	// loading today's progress from storage (0 if first run)
 	let goal = context.globalState.get('goal', 0);
-	if(goal === 0 ){
-		askForGoal(context)
+	if (goal === 0) {
+		askForGoal(context, function(newGoal) { goal = newGoal; });
 	}
 	let streaks = context.globalState.get('streaks', 0);
 	let lineCount = context.globalState.get('lineCount', 0);
@@ -293,8 +293,50 @@ function activate(context) {
 	});
 	// set goal command
 	const editgoal = vscode.commands.registerCommand('kat.edit', function () {
-		askForGoal(context)
-	})
+		askForGoal(context, function(newGoal) {
+			goal = newGoal;
+			statusBarLineCount.text = getStatusBarText(lineCount, goal);
+			statusBarLineCount.tooltip = `Goal: ${goal} lines | ${Math.max(goal - lineCount, 0)} left`;
+		});
+	});
+	// reset command
+	const resetKat = vscode.commands.registerCommand('kat.reset', function () {
+		vscode.window.showWarningMessage(
+			'Are you sure you want to reset Kat? This will clear all progress, streaks, hearts and history.',
+			'Yes, Reset',
+			'Cancel'
+		).then(function(selection) {
+			if (selection !== 'Yes, Reset') return;
+			lineCount = 0;
+			streaks = 0;
+			hearts = 3;
+			isDead = false;
+			goal = 0;
+			history = {};
+
+			context.globalState.update('lineCount', 0);
+			context.globalState.update('streaks', 0);
+			context.globalState.update('hearts', 3);
+			context.globalState.update('isDead', false);
+			context.globalState.update('goal', 0);
+			context.globalState.update('history', {});
+			context.globalState.update('lastDate', new Date().toDateString());
+
+			statusBarLineCount.text = getStatusBarText(0, 0);
+			statusBarLineCount.tooltip = 'No goal set';
+
+			if (panel) {
+				panel.webview.postMessage({ lineCount: 0, goal: 0, hearts: 3, isDead: false, streaks: 0, history: {} });
+			}
+
+			vscode.window.showInformationMessage('Kat has been reset! Set a new goal to get started :3');
+			askForGoal(context, function(newGoal) {
+				goal = newGoal;
+				statusBarLineCount.text = getStatusBarText(0, goal);
+				statusBarLineCount.tooltip = `Goal: ${goal} lines | ${goal} left`;
+			});
+		});
+	});
 	// listen for typing and increment counter when pressed enter
 	vscode.workspace.onDidChangeTextDocument(function(event) {
 		if (event.contentChanges.length===0) return;
@@ -328,28 +370,29 @@ function activate(context) {
 		}
 	});
 	context.subscriptions.push(editgoal);
+	context.subscriptions.push(resetKat);
 	context.subscriptions.push(disposable);
 	context.subscriptions.push(statusBarLineCount);
 }
 
 /**
  * @param {vscode.ExtensionContext} context
+ * @param {((newGoal: number) => void) | undefined} onGoalSet
  */
-function askForGoal(context) {
+function askForGoal(context, onGoalSet){
 	vscode.window.showInputBox({
 		prompt: 'Enter Your daily line goal',
 		placeHolder: 'e.g. 1000'
 	}).then(function(value) {
-		if (value === undefined || value === '') {
-			return;
-		}
+		if (value === undefined || value === '') return;
 		let newGoal = parseInt(value, 10);
 		if (isNaN(newGoal) || newGoal <= 0) {
 			vscode.window.showErrorMessage('Please enter a valid number greater than 0');
 			return;
 		}
 		context.globalState.update('goal', newGoal);
-	})
+		if (onGoalSet) onGoalSet(newGoal);
+	});
 }
 
 function deactivate() {}

@@ -25,6 +25,10 @@
     {
       "command": "kat.edit",
       "title": "Set Kat Goal"
+    },
+    {
+      "command": "kat.reset",
+      "title": "Reset Kat"
     }]
   },
   "scripts": {

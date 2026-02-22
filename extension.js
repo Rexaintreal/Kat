@@ -40,8 +40,14 @@ function activate(context) {
 	let today = new Date().toDateString();
 	let hearts = context.globalState.get('hearts', 3);
 	let isDead = context.globalState.get('isDead', false);
-	// new day - reset line counter 
+	/** @type {Object<string, {lines: number, goal: number, met: boolean}>} */
+	let history = context.globalState.get('history', {});
 	if (lastDate !== today) {
+		history[lastDate] = {
+			lines: lineCount,
+			goal: goal,
+			met: lineCount >= goal
+		}
 		if (lastDate !== ''){
 			const lastDateObj = new Date(lastDate);
 			const todayObj = new Date(today);
@@ -78,6 +84,7 @@ function activate(context) {
 		context.globalState.update('hearts', hearts);
 		context.globalState.update('streaks', streaks);
 		context.globalState.update('isDead', isDead);
+		context.globalState.update('history', history);
 	}
 	// live count status bar 
 	const statusBarLineCount = vscode.window.createStatusBarItem();
@@ -121,7 +128,7 @@ function activate(context) {
 				context.globalState.update('isDead', isDead);
 				let currentGoal = context.globalState.get('goal', 0);
 				if (panel) {
-					panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead, streaks: streaks });
+					panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead, streaks: streaks, history: history});
 				}
 			}
 		})
@@ -148,15 +155,83 @@ function activate(context) {
 				<img id="heart3" src="${heartUri}" width="100">
 			</div>
 			<button id="reviveBtn" style="display:none; margin-top: 20px; padding: 10px 24px; font-size: 1rem; background: #7cc379; color: white; border: none; border-radius: 10px; cursor: pointer;">Revive Kat :3</button>
+			<div style="margin-top:28px;text-align: center;">
+				<p style="font-size: 0.85rem; color: #888; margin-bottom: 8px; font-weight: bold;">Last 30 Days</p>
+				<div id="heatmap" style="display:flex; gap:5px; justify-content: center; flex-wrap:wrap; max-width:380px;"></div>
+    			<div id="heatmap-tooltip" style="position:fixed; display:none; background:#333; color:#fff; padding:5px 10px; border-radius:6px; font-size:0.78rem; pointer-events:none; z-index:999;"></div>
+			</div>
 			<script>
 				const vscode = acquireVsCodeApi();
 				document.getElementById('reviveBtn').addEventListener('click', function() {
 					vscode.postMessage({ type: 'revive' });
 				});
+				// heatmap
+				const tooltip= document.getElementById('heatmap-tooltip');
+				let context_goal = ${currentGoal};
+				let context_lineCount = ${lineCount};
+				function renderHeatmap(history) {
+					// adding today live progress
+					const today=new Date().toDateString();
+					const liveGoal = context_goal;
+					const merged = Object.assign({}, history);
+					if (liveGoal> 0) {
+						merged[today] = { lines: context_lineCount, goal: liveGoal, met: context_lineCount >= liveGoal };
+					}
+					const container = document.getElementById('heatmap');
+					container.innerHTML = '';
+					for (let i=29; i>= 0; i--) {
+						const d= new Date();
+						d.setDate(d.getDate() - i);
+						const key = d.toDateString();
+						const entry = merged ? merged[key] : undefined;
+
+						let bg, title;
+						if (!entry) {
+							bg = '#ccc';
+							title = key + '\\n No Data';
+						} else if (entry.met) {
+							// shade of green absed on goal
+							const ratio = Math.min(entry.lines / entry.goal, 2);
+							const brightness = Math.round(150 + (ratio - 1)*55); 
+							bg = 'rgb(60,' + brightness + ',60)';
+							title = key + '\\n' + entry.lines + ' / ' + entry.goal + ' lines ';
+						} else {
+							// shade of red for baerly codign
+							const ratio = entry.goal > 0 ? entry.lines / entry.goal : 0;
+							const g = Math.round(ratio * 80);
+							bg = 'rgb(180,' + g + ',' + g + ')';
+							title = key + '\\n' + entry.lines + ' / ' + entry.goal + ' lines ';
+						}
+
+						const cell = document.createElement('div');
+						cell.style.cssText = [
+							'width:20px', 'height:20px', 'border-radius:4px',
+							'background:' + bg, 'cursor:default',
+							'transition:transform 0.1s', 'flex-shrink:0'
+						].join(';');
+						cell.addEventListener('mouseenter', function(e) {
+							tooltip.style.display = 'block';
+							tooltip.innerHTML = title.replace('\\n', '<br>');
+						});
+						cell.addEventListener('mousemove', function(e) {
+							tooltip.style.left = (e.clientX + 12) + 'px';
+							tooltip.style.top  = (e.clientY - 28) + 'px';
+						});
+						cell.addEventListener('mouseleave', function() {
+							tooltip.style.display = 'none';
+						});
+						cell.addEventListener('mouseenter', function() { cell.style.transform = 'scale(1.3)'; }, true);
+						cell.addEventListener('mouseleave', function() { cell.style.transform = 'scale(1)'; }, true);
+
+						container.appendChild(cell);
+					}
+				}
 				// set init state 
 				let count = ${lineCount};
 				let goal = ${currentGoal};
-				function updateDisplay(c, g, h, d, s) {
+				function updateDisplay(c, g, h, d, s, hist) {
+					context_lineCount = c;
+					context_goal = g;
 					let percent = g > 0 ? Math.min((c / g) * 100, 100): 0;
 					document.getElementById('progressBar').style.width = percent + '%';
 					document.getElementById('label').textContent = c + ' / ' + g + ' lines';
@@ -187,19 +262,20 @@ function activate(context) {
 					}
 					document.getElementById('streakLabel').textContent = "Streak: " + s + " days";
 					document.getElementById('reviveBtn').style.display = d ? 'block' : 'none';
+					if (hist !== undefined) renderHeatmap(hist);
 				}
 
 				// run on load immediately 
-				updateDisplay(count, goal, ${hearts}, ${isDead}, ${streaks});
+				updateDisplay(count, goal, ${hearts}, ${isDead}, ${streaks}, ${JSON.stringify({})});
 
 				// listen for updates
 				window.addEventListener('message', function(event) {
-					updateDisplay(event.data.lineCount, event.data.goal, event.data.hearts, event.data.isDead, event.data.streaks);
+					updateDisplay(event.data.lineCount, event.data.goal, event.data.hearts, event.data.isDead, event.data.streaks, event.data.history);
 				});
 			</script>
 		</body>
 		</html>`
-		panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead, streaks: streaks});
+		panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead, streaks: streaks, history: history});
 	});
 	// set goal command
 	const editgoal = vscode.commands.registerCommand('kat.edit', function () {
@@ -233,7 +309,7 @@ function activate(context) {
 		}
 		if (panel) {
 			let currentGoal = context.globalState.get('goal', 0);
-			panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead, streaks: streaks});
+			panel.webview.postMessage({ lineCount: lineCount, goal: currentGoal, hearts: hearts, isDead: isDead, streaks: streaks, history: history});
 		}
 	});
 	context.subscriptions.push(editgoal);
